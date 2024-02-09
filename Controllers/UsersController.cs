@@ -12,11 +12,13 @@ namespace DotNetAuthentication.Controllers
     {
         private readonly DotNetAuthenticationDbContext _context;
         private readonly IAuthService _authService;
+        private readonly IUserService _userService;
 
-        public UsersController(DotNetAuthenticationDbContext context, IAuthService authService)
+        public UsersController(DotNetAuthenticationDbContext context, IAuthService authService, IUserService userService)
         {
             _context = context;
             _authService = authService;
+            _userService = userService;
         }
 
         // GET: api/Users
@@ -77,9 +79,13 @@ namespace DotNetAuthentication.Controllers
         public async Task<ActionResult<User>> PostUser(UserUpdateDto userDto)
         {
             var user = userDto.Adapt<User>();
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            await _authService.SetPassword(user, userDto.Password!);
+
+            user = await _userService.AddUser(user);
+
+            if (userDto.Password != null)
+            {
+                await _authService.SetPassword(user, userDto.Password!);
+            }
 
             return CreatedAtAction("GetUser", new { id = user.Id }, user);
         }
