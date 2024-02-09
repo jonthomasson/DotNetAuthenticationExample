@@ -28,7 +28,7 @@ namespace DotNetAuthentication.Controllers
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<UserDto>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -37,7 +37,7 @@ namespace DotNetAuthentication.Controllers
                 return NotFound();
             }
 
-            return user;
+            return user.Adapt<UserDto>();
         }
 
         // PUT: api/Users/5

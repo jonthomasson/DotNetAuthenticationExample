@@ -34,40 +34,52 @@ namespace DotNetAuthentication.Services
         //    return user;
         //}
 
+        private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        {
+            using (var hmac = new Rfc2898DeriveBytes(password, 16, 10000))
+            {
+                passwordSalt = hmac.Salt;
+                passwordHash = hmac.GetBytes(32); // Creates a 256-bit hash
+            }
+        }
+
+        private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        {
+            using (var hmac = new Rfc2898DeriveBytes(password, storedSalt, 10000))
+            {
+                var computedHash = hmac.GetBytes(32); // Must match the size of the stored hash
+                return computedHash.SequenceEqual(storedHash);
+            }
+        }
+
         public async Task<User?> CheckLoginHash(string username, string password)
         {
             // Retrieve user from the database
-            var user = await _context.Users.Where(u => u.UserName == username).FirstOrDefaultAsync();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == username);
             if (user == null) return null;
 
-            // Verify the hashed password
-            using (var hmac = new HMACSHA512(user.PasswordSalt))
-            {
-                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != user.PasswordHash[i]) return null;
-                }
-            }
+            // Verify the hashed password using PBKDF2
+            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+                return null;
 
             return user;
         }
+
 
         public async Task SetPassword(User user, string newPassword)
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
             if (string.IsNullOrWhiteSpace(newPassword)) throw new ArgumentException("Password cannot be empty or whitespace only string.", nameof(newPassword));
 
-            using (var hmac = new HMACSHA512())
-            {
-                user.PasswordSalt = hmac.Key;
-                user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(newPassword));
-            }
+            // Create password hash and salt using PBKDF2
+            CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
 
             // Update the user in the database with the new password hash and salt
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-
         }
 
         public string? GenerateToken(User user)
