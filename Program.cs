@@ -1,9 +1,15 @@
+using DotNetAuthentication.Models;
 using DotNetAuthentication.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<DotNetAuthenticationDbContext>(
+                options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 var config = builder.Configuration;
 
 // Add services to the container.
@@ -47,6 +53,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<DotNetAuthenticationDbContext>();
+    //context.Database.EnsureDeleted();
+    context.Database.EnsureCreated();
 }
 
 app.UseHttpsRedirection();
