@@ -10,6 +10,9 @@ namespace DotNetAuthentication.Services
 {
     public class AuthService : IAuthService
     {
+        const int keySize = 64;
+        const int iterations = 350000;
+        HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA512;
         private readonly IConfiguration _configuration;
         private readonly DotNetAuthenticationDbContext _context;
         public AuthService(IConfiguration configuration, DotNetAuthenticationDbContext context)
@@ -36,20 +39,19 @@ namespace DotNetAuthentication.Services
 
         private void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
-            using (var hmac = new Rfc2898DeriveBytes(password, 16, 10000))
-            {
-                passwordSalt = hmac.Salt;
-                passwordHash = hmac.GetBytes(32); // Creates a 256-bit hash
-            }
+            passwordSalt = RandomNumberGenerator.GetBytes(keySize);
+            passwordHash = Rfc2898DeriveBytes.Pbkdf2(
+       Encoding.UTF8.GetBytes(password),
+       passwordSalt,
+       iterations,
+       hashAlgorithm,
+       keySize);
         }
 
         private bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
-            using (var hmac = new Rfc2898DeriveBytes(password, storedSalt, 10000))
-            {
-                var computedHash = hmac.GetBytes(32); // Must match the size of the stored hash
-                return computedHash.SequenceEqual(storedHash);
-            }
+            var hashToCompare = Rfc2898DeriveBytes.Pbkdf2(password, storedSalt, iterations, hashAlgorithm, keySize);
+            return CryptographicOperations.FixedTimeEquals(hashToCompare, storedHash);
         }
 
         public async Task<User?> CheckLoginHash(string username, string password)
