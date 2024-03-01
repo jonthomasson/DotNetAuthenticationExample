@@ -13,6 +13,7 @@ public class UserService : IUserService
     }
     public async Task<User> AddUser(User user)
     {
+        user.CreatedDateTimestamp = DateTime.UtcNow;
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
