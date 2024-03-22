@@ -1,6 +1,55 @@
-@DotNetAuthentication_HostAddress = http://localhost:5082
+@DotNetAuthentication_HostAddress = https://localhost:7140
+@user_id = 2
+@new_user = { "id": 0,  "email": "jonnerin2@gmail.com", "name": "jonnerin2", "userName": "jonnerin2","password": "password","role": 1}
+@username = jthomasson
+@password = password
+@token = eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyIiwidW5pcXVlX25hbWUiOiJqdGhvbWFzc29uIiwicm9sZSI6IlNjaG9vbCIsImVtYWlsIjoianRob21hc3NvbkBzamNvZS5uZXQiLCJuYmYiOjE3MTEwNzg1NzQsImV4cCI6MTcxMTEwNzM3NCwiaWF0IjoxNzExMDc4NTc0LCJpc3MiOiJodHRwczovL2lzc3Vlci55b3Vyc2l0ZS5jb20iLCJhdWQiOiJodHRwczovL2F1ZGllbmNlLnlvdXJzaXRlLmNvbSJ9.N1bpRu4AEC9N_tDaDLaqD4t29b1UroE3Rs6njhgX1t4rPa7SaUJ_5fK7Izf0XuQzVlmBz5j048Dc5zkzO3cQMA
 
 GET {{DotNetAuthentication_HostAddress}}/weatherforecast/
 Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+GET {{DotNetAuthentication_HostAddress}}/api/users
+
+###
+
+POST {{DotNetAuthentication_HostAddress}}/api/users
+Content-Type: application/json
+
+{{new_user}}
+
+###
+
+GET {{DotNetAuthentication_HostAddress}}/api/users/{{user_id}}
+
+###
+
+DELETE {{DotNetAuthentication_HostAddress}}/api/users/{{user_id}}
+
+###
+
+PUT {{DotNetAuthentication_HostAddress}}/api/users/{{user_id}}
+Content-Type: application/json
+
+{
+    "id": 2,
+    "email": "jthomasson@sjcoe.net",
+    "name": "jthomasson",
+    "userName": "jthomasson",
+    "passwordHash": "rW46YYCxVo6E1oRE5Efp/qIRbprZ6a0czNlMqw5CuuKA0CW2j0AUqLpKQ5irDv09/aaQC03g3awgeTm06mKmxQ==",
+    "passwordSalt": "2yTQWETlPRKmoJGRY6SwuCg2x663yZDMwDIv4XWycBZnKsHj1qcf3+KTHw7lLR6Hzdun38zfpbrpKs3FywkNvA==",
+    "role": 1,
+    "createdDateTimestamp": "2024-03-01T18:19:54.2020572"
+  }
+
+###
+
+POST {{DotNetAuthentication_HostAddress}}/auth?username={{username}}&password={{password}}
+
+###
+
+GET {{DotNetAuthentication_HostAddress}}/weatherforecast
 
 ###
